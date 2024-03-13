@@ -1,6 +1,14 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
+import { ApiTags } from '@nestjs/swagger';
 import { RawHeaders } from 'src/auth/decorators/raw-headers.decorator';
 import { AuthService } from './auth.service';
 import { Auth, RoleProtected } from './decorators';
@@ -10,6 +18,7 @@ import { User } from './entities/user.entity';
 import { UserRoleGuard } from './guards/user-role.guard';
 import { ValidRoles } from './interfaces';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -20,13 +29,16 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   async login(@Body() loginUserDTO: LoginUserDTO) {
     return await this.authService.login(loginUserDTO);
   }
 
-  @Get('check-auth-status')
-  checkAuthStatus() {
-    return this.authService.checkAuthStatus(/** user */);
+  @Get('check-status')
+  @UseGuards(AuthGuard())
+  @Auth()
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkAuthStatus(user);
   }
 
   @Get('private')
@@ -34,7 +46,6 @@ export class AuthController {
   testingPrivateRoute(
     @GetUser() user: User,
     @GetUser('email') userEmail: string,
-    @Req() request: Request,
     @RawHeaders() rawHeaders: string[],
   ) {
     console.log({ rawHeaders });

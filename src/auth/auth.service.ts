@@ -45,6 +45,7 @@ export class AuthService {
         throw new UnauthorizedException('Credenciales inválidas');
 
       delete user.password;
+      delete user.roles;
       return {
         ...user,
         token: this.getJWTToken({ id: user.id }),
@@ -52,7 +53,13 @@ export class AuthService {
     } catch (error) {}
   }
 
-  async checkAuthStatus() {}
+  async checkAuthStatus(user: User) {
+    delete user.roles;
+    return {
+      ...user,
+      token: this.getJWTToken({ id: user.id }),
+    };
+  }
 
   private getJWTToken(payload: JwtPayload) {
     return this.jwtService.sign(payload);
